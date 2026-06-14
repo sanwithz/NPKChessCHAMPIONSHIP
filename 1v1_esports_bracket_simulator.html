@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPK Chess club Tournament Bracket Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Exo 2 for gaming vibes, Inter for readability -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,300;0,400;0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #09090b;
+        }
+        .font-gaming {
+            font-family: 'Exo 2', sans-serif;
+        }
+        /* Slanted esports aesthetic cards matching the overlay design */
+        .skew-card {
+            transform: skewX(-12deg);
+        }
+        .unskew-content {
+            transform: skewX(12deg);
+        }
+        /* Pulse glows for active upcoming matches */
+        @keyframes borderPulse {
+            0%, 100% { border-color: rgba(234, 179, 8, 0.4); box-shadow: 0 0 8px rgba(234, 179, 8, 0.2); }
+            50% { border-color: rgba(234, 179, 8, 1); box-shadow: 0 0 16px rgba(234, 179, 8, 0.6); }
+        }
+        .live-pulse {
+            animation: borderPulse 2s infinite ease-in-out;
+        }
+        /* Radial background inspired by esports broadcasting */
+        .cyber-grid {
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.8) 0%, rgba(9, 9, 11, 1) 80%),
+                linear-gradient(rgba(18, 24, 38, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(18, 24, 38, 0.1) 1px, transparent 1px);
+            background-size: 100% 100%, 20px 20px, 20px 20px;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    </style>
+</head>
+<body class="cyber-grid text-zinc-100 min-h-screen flex flex-col overflow-x-hidden selection:bg-yellow-500 selection:text-black">
+
+    <!-- Top & Bottom Yellow Border Accents from screenshot -->
+    <div class="h-1.5 w-full bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-600"></div>
+
+    <!-- Header Section -->
+    <header class="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10 border-b border-zinc-800/80">
+        <!-- Brand & League Info Left -->
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col">
+                <div class="flex items-center gap-2">
+                    <span class="bg-red-600 text-white font-gaming font-extrabold text-xs px-2 py-0.5 rounded tracking-wider">PREMIER LEAGUE 2026</span>
+                    <span class="text-xs text-yellow-500 font-bold tracking-widest uppercase">หมากรุกไทยเพื่อมิตรภาพ</span>
+                </div>
+                <h2 class="text-zinc-400 text-sm tracking-wider font-medium">NPK Chess club | 1v1 CHAMPIONSHIP</h2>
+            </div>
+        </div>
+
+        <!-- Big Center Title matching Screenshot -->
+        <div class="text-center flex flex-col items-center">
+            <div class="relative">
+                <h1 class="text-5xl md:text-6xl font-gaming font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-100 to-zinc-400 drop-shadow-[0_4px_12px_rgba(255,255,255,0.15)]">
+                    1V1 <span class="text-yellow-400">BRACKET</span>
+                </h1>
+                <!-- Glowing star/accent line under title -->
+                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-48 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
+            </div>
+        </div>
+
+        <!-- Simulated Live Time, Controller & FX Settings Right -->
+        <div class="flex flex-wrap items-center gap-4 justify-end">
+            <!-- Simulated Live Clock -->
+            <div class="bg-zinc-900/95 border border-zinc-800 px-4 py-2 rounded-lg flex items-center gap-3 shadow-lg">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+                <div class="text-xs font-semibold text-zinc-400">
+                    SIMULATED LIVE TIME:<br/>
+                    <span id="live-clock" class="text-yellow-400 font-mono text-sm font-bold">June 14, 2026 14:31:00</span>
+                </div>
+            </div>
+
+            <!-- Custom Sound FX Toggle -->
+            <button onclick="toggleAudio()" id="audio-toggle-btn" class="bg-zinc-800 hover:bg-zinc-700 transition px-3 py-2 rounded-lg flex items-center gap-2 text-xs border border-zinc-700 shadow" title="Mute/Unmute UI sound effects">
+                <svg id="audio-icon-unmuted" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"/></svg>
+                <svg id="audio-icon-muted" class="w-4 h-4 text-zinc-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
+                <span>SFX</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Navigation & Quick Controls Toolbar -->
+    <section class="container mx-auto px-4 py-4 flex flex-col xl:flex-row justify-between items-center gap-4 relative z-10">
+        <!-- Left: Quick Simulation & Reset Controls -->
+        <div class="flex flex-wrap items-center gap-2">
+            <button onclick="clearAllScores()" class="bg-red-950/40 hover:bg-red-900/60 border border-red-900/50 text-red-200 font-bold px-3 py-1.5 rounded text-xs transition duration-200" title="Set all matches in the tournament to 0-0 unplayed state">
+                Clear All Scores (0-0)
+            </button>
+            <button onclick="resetMatchScoresOnly()" class="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 font-semibold px-3 py-1.5 rounded text-xs transition duration-200" title="Reset match results to default snapshot starting state, preserving your custom player profiles">
+                Reset Scores Only
+            </button>
+            <button onclick="resetTournament()" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-500 hover:text-zinc-400 font-medium px-3 py-1.5 rounded text-xs transition duration-200" title="Fully reset match results AND player names back to original defaults">
+                Full Factory Reset
+            </button>
+            <button onclick="simulateAllRemaining()" class="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-extrabold px-4 py-1.5 rounded text-xs transition duration-200 shadow-md">
+                Fast Predict All Matches
+            </button>
+        </div>
+
+        <!-- Right: View Selector -->
+        <div class="bg-zinc-900 border border-zinc-800 p-1 rounded-lg flex flex-wrap gap-1">
+            <button onclick="setViewMode('bracket')" id="btn-view-bracket" class="px-3 py-1 rounded text-xs font-semibold transition bg-yellow-500 text-zinc-950">
+                Bracket View
+            </button>
+            <button onclick="setViewMode('list')" id="btn-view-list" class="px-3 py-1 rounded text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition">
+                Match Timeline & Stats
+            </button>
+            <button onclick="setViewMode('roster')" id="btn-view-roster" class="px-3 py-1 rounded text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition flex items-center gap-1">
+                <svg class="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/></svg>
+                Roster Editor
+            </button>
+        </div>
+    </section>
+
+    <!-- Main Live Dynamic Widget -->
+    <section class="container mx-auto px-4 mb-6 relative z-10">
+        <div class="bg-gradient-to-r from-zinc-900 via-yellow-950/20 to-zinc-900 border border-yellow-500/30 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_4px_30px_rgba(234,179,8,0.05)]">
+            <div class="flex items-center gap-4">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                </span>
+                <div>
+                    <h3 class="text-sm font-gaming font-extrabold tracking-wider text-yellow-400">NEXT UPCOMING CLASH</h3>
+                    <p class="text-xs text-zinc-400">Match 11 (Semis) starting in under 30 minutes! Live prediction active.</p>
+                </div>
+            </div>
+            <!-- Countdown component -->
+            <div class="flex items-center gap-4 font-mono">
+                <div class="text-right">
+                    <div class="text-xs text-zinc-500">M11 STARTING IN</div>
+                    <div id="m11-countdown" class="text-xl md:text-2xl font-bold text-yellow-400 tracking-wider">00h 29m 00s</div>
+                </div>
+                <button onclick="openPredictionModal('M11')" class="bg-yellow-500 hover:bg-yellow-600 text-zinc-950 text-xs font-extrabold uppercase px-4 py-2.5 rounded shadow transition-all transform hover:scale-105">
+                    Cast Score / Predict
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Desktop Bracket View -->
+    <main id="bracket-view-container" class="flex-grow container mx-auto px-4 pb-12 relative overflow-visible flex flex-col justify-center">
+        <!-- SVG Connections Canvas Layer -->
+        <svg id="bracket-svg" class="absolute inset-0 w-full h-full pointer-events-none hidden lg:block z-0"></svg>
+
+        <!-- Symmetrical 5-Column Grid Structure -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-y-12 gap-x-4 lg:gap-x-6 items-center justify-center relative z-10 w-full">
+            
+            <!-- COLUMN 1: LEFT QUARTERFINALS (June 13) -->
+            <div class="flex flex-col gap-8 justify-between h-full py-4 order-1">
+                <h3 class="text-center font-gaming text-xs tracking-wider text-cyan-400 font-black border-b border-cyan-900/50 pb-2 mb-2">LEFT QUARTERFINALS</h3>
+                
+                <!-- Match 1 -->
+                <div id="match-M1" onclick="openPredictionModal('M1')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-cyan-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M1 - 13:00 - JUNE 13</span>
+                        <span class="status-label text-cyan-400">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m1-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 2 -->
+                <div id="match-M2" onclick="openPredictionModal('M2')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-cyan-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M2 - 14:00 - JUNE 13</span>
+                        <span class="status-label text-cyan-400">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m2-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 3 -->
+                <div id="match-M3" onclick="openPredictionModal('M3')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-cyan-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M3 - 15:00 - JUNE 13</span>
+                        <span class="status-label text-cyan-400">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m3-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 4 -->
+                <div id="match-M4" onclick="openPredictionModal('M4')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-cyan-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M4 - 16:00 - JUNE 13</span>
+                        <span class="status-label text-cyan-400">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m4-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMN 2: LEFT SEMIFINALS (June 14) -->
+            <div class="flex flex-col gap-16 justify-center h-full py-8 order-2">
+                <h3 class="text-center font-gaming text-xs tracking-wider text-cyan-400 font-black border-b border-cyan-900/50 pb-2 mb-2 lg:mt-0 mt-8">LEFT SEMIFINALS</h3>
+                
+                <!-- Match 9 -->
+                <div id="match-M9" onclick="openPredictionModal('M9')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-cyan-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M9 - 13:00 - JUNE 14</span>
+                        <span class="status-label text-cyan-400">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m9-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 10 -->
+                <div id="match-M10" onclick="openPredictionModal('M10')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-cyan-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M10 - 14:00 - JUNE 14</span>
+                        <span class="status-label text-cyan-400">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m10-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMN 3: CENTER STAGE -->
+            <div class="flex flex-col justify-around gap-12 h-full py-4 order-3 md:col-span-2 lg:col-span-1">
+                <h3 class="text-center font-gaming text-xs tracking-wider text-yellow-400 font-black border-b border-yellow-900/50 pb-2 mb-2 lg:mt-0 mt-8">CENTER CHAMPIONS STAGE</h3>
+
+                <!-- Match 13 - Left Final -->
+                <div id="match-M13" onclick="openPredictionModal('M13')" class="group cursor-pointer bg-zinc-900/95 border border-zinc-800 hover:border-cyan-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M13 - 17:00 - JUNE 14</span>
+                        <span class="status-label text-amber-400 animate-pulse">UPCOMING</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m13-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- GRAND FINAL - M15 -->
+                <div id="match-M15" onclick="openPredictionModal('M15')" class="group cursor-pointer bg-black/95 border-2 border-yellow-500/80 p-4 rounded-lg transition duration-200 hover:shadow-[0_0_25px_rgba(234,179,8,0.3)] relative">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[9px] font-gaming font-black px-3 py-0.5 rounded-full tracking-wider uppercase shadow">
+                        GRAND FINAL MATCH
+                    </div>
+                    <div class="text-center mt-1 mb-3">
+                        <div class="text-[10px] font-bold text-yellow-400/90 font-gaming">M15 - 19:00 - JUNE 14</div>
+                    </div>
+                    <div class="flex flex-col gap-2" id="m15-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 14 - Right Final -->
+                <div id="match-M14" onclick="openPredictionModal('M14')" class="group cursor-pointer bg-zinc-900/95 border border-zinc-800 hover:border-rose-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M14 - 18:00 - JUNE 14</span>
+                        <span class="status-label text-amber-400 animate-pulse">UPCOMING</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m14-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMN 4: RIGHT SEMIFINALS (June 14) -->
+            <div class="flex flex-col gap-16 justify-center h-full py-8 order-4">
+                <h3 class="text-center font-gaming text-xs tracking-wider text-rose-500 font-black border-b border-rose-900/50 pb-2 mb-2 lg:mt-0 mt-8">RIGHT SEMIFINALS</h3>
+                
+                <!-- Match 11 -->
+                <div id="match-M11" onclick="openPredictionModal('M11')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-rose-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.15)] live-pulse relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M11 - 15:00 - JUNE 14</span>
+                        <span class="status-label text-yellow-400 font-extrabold animate-pulse">LIVE SOON</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m11-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 12 -->
+                <div id="match-M12" onclick="openPredictionModal('M12')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-rose-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M12 - 16:00 - JUNE 14</span>
+                        <span class="status-label text-amber-400 animate-pulse">UPCOMING</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m12-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMN 5: RIGHT QUARTERFINALS (June 13) -->
+            <div class="flex flex-col gap-8 justify-between h-full py-4 order-5">
+                <h3 class="text-center font-gaming text-xs tracking-wider text-rose-500 font-black border-b border-rose-900/50 pb-2 mb-2 lg:mt-0 mt-8">RIGHT QUARTERFINALS</h3>
+                
+                <!-- Match 5 -->
+                <div id="match-M5" onclick="openPredictionModal('M5')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-rose-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M5 - 17:00 - JUNE 13</span>
+                        <span class="status-label text-rose-500">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m5-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 6 -->
+                <div id="match-M6" onclick="openPredictionModal('M6')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-rose-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M6 - 18:00 - JUNE 13</span>
+                        <span class="status-label text-rose-500">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m6-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 7 -->
+                <div id="match-M7" onclick="openPredictionModal('M7')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-rose-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M7 - 19:00 - JUNE 13</span>
+                        <span class="status-label text-rose-500">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m7-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Match 8 -->
+                <div id="match-M8" onclick="openPredictionModal('M8')" class="group cursor-pointer bg-zinc-900/90 border border-zinc-800 hover:border-rose-500/50 rounded p-3 transition duration-200 hover:shadow-[0_0_15px_rgba(244,63,94,0.15)] relative">
+                    <div class="text-[10px] font-bold text-yellow-400/95 font-gaming flex justify-between mb-2">
+                        <span>M8 - 20:00 - JUNE 13</span>
+                        <span class="status-label text-rose-500">FINISHED</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5" id="m8-teams">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Alternative View 1: Match Timeline Table (Hidden by default) -->
+    <main id="list-view-container" class="flex-grow container mx-auto px-4 pb-12 hidden relative z-10">
+        <div class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-6 shadow-xl">
+            <h2 class="text-xl font-gaming font-extrabold text-yellow-400 tracking-wider mb-6 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                CHRONOLOGICAL MATCH SCHEDULE & PLAYER ROSTER
+            </h2>
+
+            <!-- Player Quick Stats Database Carousel Grid -->
+            <div class="mb-8">
+                <h3 class="text-xs text-zinc-400 uppercase tracking-widest font-bold mb-4">TOURNAMENT PLAYER ROSTER STATS</h3>
+                <div id="player-grid-stats" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                    <!-- Populated dynamically with beautiful mini stat sheets -->
+                </div>
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="border-b border-zinc-800 text-zinc-500 font-bold uppercase tracking-wider">
+                            <th class="py-3 px-4">Match ID</th>
+                            <th class="py-3 px-4">Date & Time</th>
+                            <th class="py-3 px-4 text-center">Matchup</th>
+                            <th class="py-3 px-4 text-center">Current Scores</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="match-schedule-tbody" class="divide-y divide-zinc-800/50">
+                        <!-- Populated dynamically with matches list -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Alternative View 2: Custom Roster Manager (Hidden by default) -->
+    <main id="roster-view-container" class="flex-grow container mx-auto px-4 pb-12 hidden relative z-10">
+        <div class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-6 shadow-xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-zinc-800 pb-4">
+                <div>
+                    <h2 class="text-xl font-gaming font-extrabold text-yellow-400 tracking-wider flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        CUSTOM ROSTER MANAGER
+                    </h2>
+                    <p class="text-xs text-zinc-400 mt-1">Customize names, animal avatars, and chess openings of participants in the 1v1 Bracket.</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs bg-zinc-800 px-3 py-1 rounded text-zinc-400 font-semibold border border-zinc-700">16 Active Competitors</span>
+                </div>
+            </div>
+
+            <!-- Roster Editor Grid -->
+            <div id="roster-editor-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Dynamically populated with editable card sheets -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Player Edit Overlay Modal -->
+    <div id="player-edit-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm hidden animate-fade-in">
+        <div class="bg-zinc-950 border border-zinc-800 rounded-xl max-w-md w-full overflow-hidden shadow-2xl">
+            
+            <div class="bg-gradient-to-r from-zinc-900 to-black p-5 border-b border-zinc-800 flex justify-between items-center">
+                <div>
+                    <span class="bg-yellow-500 text-black font-gaming font-black text-[10px] px-2 py-0.5 rounded tracking-wide">ROSTER EDITOR</span>
+                    <h3 class="text-lg font-gaming font-extrabold text-zinc-100 mt-1">Edit Competitor Profile</h3>
+                </div>
+                <button onclick="closePlayerEditModal()" class="text-zinc-500 hover:text-zinc-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <!-- Competitor Key Tracker -->
+                <input type="hidden" id="edit-player-key" value="">
+
+                <div>
+                    <label class="block text-xs text-zinc-400 font-bold mb-1.5 uppercase">Display Name</label>
+                    <input type="text" id="edit-player-name" class="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 font-bold focus:outline-none focus:border-yellow-500 transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-zinc-400 font-bold mb-1.5 uppercase">Animal Avatar</label>
+                        <select id="edit-player-animal" class="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-yellow-500 transition">
+                            <option value="LION">🦁 Lion (LION)</option>
+                            <option value="TIGER">🐯 Tiger (TIGER)</option>
+                            <option value="WOLF">🐺 Wolf (WOLF)</option>
+                            <option value="DRAGON">🐉 Dragon (DRAGON)</option>
+                            <option value="PANDA">🐼 Panda (PANDA)</option>
+                            <option value="BEAR">🐻 Bear (BEAR)</option>
+                            <option value="FOX">🦊 Fox (FOX)</option>
+                            <option value="EAGLE">🦅 Eagle (EAGLE)</option>
+                            <option value="SHARK">🦈 Shark (SHARK)</option>
+                            <option value="COBRA">🐍 Cobra (COBRA)</option>
+                            <option value="OWL">🦉 Owl (OWL)</option>
+                            <option value="GORILLA">🦍 Gorilla (GORILLA)</option>
+                            <option value="LEOPARD">🐆 Leopard (LEOPARD)</option>
+                            <option value="UNICORN">🦄 Unicorn (UNICORN)</option>
+                            <option value="RAM">🐏 Ram (RAM)</option>
+                            <option value="GATOR">🐊 Gator (GATOR)</option>
+                            <option value="UNKNOWN">🐾 Wildcard (UNKNOWN)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-zinc-400 font-bold mb-1.5 uppercase">Win Rate (%)</label>
+                        <input type="text" id="edit-player-wr" class="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 font-mono focus:outline-none focus:border-yellow-500 transition" placeholder="e.g. 74%">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-zinc-400 font-bold mb-1.5 uppercase">Favorite Opening (เปิดหมากโปรด)</label>
+                    <select id="edit-player-opening" class="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-yellow-500 transition">
+                        <option value="ม้าโยงขวาโคนเทียมเม็ด">ม้าโยงขวาโคนเทียมเม็ด</option>
+                        <option value="ม้าโยงขวาบันลือโลก">ม้าโยงขวาบันลือโลก</option>
+                        <option value="ม้าโยงขวาโคนผูกเม็ด">ม้าโยงขวาโคนผูกเม็ด</option>
+                        <option value="ม้าเทียมโคนนายผล">ม้าเทียมโคนนายผล</option>
+                        <option value="ม้าเทียมมาตรฐาน">ม้าเทียมมาตรฐาน</option>
+                        <option value="ม้าเทียมโคนขุนพลคู่">ม้าเทียมโคนขุนพลคู่</option>
+                        <option value="ม้าเทียมเม็ดซ้าย">ม้าเทียมเม็ดซ้าย</option>
+                        <option value="ม้าซ้ายมาตรฐาน">ม้าซ้ายมาตรฐาน</option>
+                        <option value="ม้าซ้ายโคนผูกโคน">ม้าซ้ายโคนผูกโคน</option>
+                        <option value="ม้าซ้ายโคนเทียมโคน">ม้าซ้ายโคนเทียมโคน</option>
+                        <option value="ม้าคุมกลาง">ม้าคุมกลาง</option>
+                        <option value="ม้าอุปการซ้าย">ม้าอุปการซ้าย</option>
+                        <option value="ม้ามังกรสลับขวา">ม้ามังกรสลับขวา</option>
+                        <option value="เรือมเหศวร">เรือมเหศวร</option>
+                        <option value="ม้าอุปการขวา">ม้าอุปการขวา</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-zinc-400 font-bold mb-1.5 uppercase">Bio Spec Description</label>
+                    <input type="text" id="edit-player-meta" class="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-yellow-500 transition" placeholder="e.g. Midlane Overlord">
+                </div>
+            </div>
+
+            <div class="bg-zinc-900/50 px-6 py-4 border-t border-zinc-800 flex justify-end gap-2">
+                <button onclick="closePlayerEditModal()" class="px-4 py-2 text-xs font-semibold rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="savePlayerCustomization()" class="px-5 py-2 text-xs font-extrabold rounded bg-yellow-500 hover:bg-yellow-600 text-zinc-950 transition-all shadow-md">
+                    Apply Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Modal (Prediction / Simulator Score Editor) -->
+    <div id="prediction-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden animate-fade-in">
+        <div class="bg-zinc-950 border border-zinc-800 rounded-xl max-w-lg w-full overflow-hidden shadow-2xl relative">
+            
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-zinc-900 to-black p-5 border-b border-zinc-800 flex justify-between items-center">
+                <div>
+                    <span id="modal-match-id" class="bg-yellow-500 text-black font-gaming font-black text-xs px-2 py-0.5 rounded tracking-wide">MATCH</span>
+                    <h3 class="text-lg font-gaming font-extrabold text-zinc-100 mt-1" id="modal-match-title">Match Simulation Editor</h3>
+                </div>
+                <button onclick="closePredictionModal()" class="text-zinc-500 hover:text-zinc-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal Content & Player Info Display -->
+            <div class="p-6">
+                <!-- Info Alert -->
+                <div class="bg-zinc-900/50 border border-zinc-800/80 rounded p-3 mb-6 text-xs text-zinc-400 leading-relaxed flex items-start gap-2">
+                    <svg class="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Input scores manually below to simulate predictions. Advancing players will cascade instantly throughout the rest of the 1v1 bracket.</span>
+                </div>
+
+                <!-- Schedule Editor Panel -->
+                <div class="bg-zinc-900/40 border border-zinc-800/60 rounded p-4 mb-6 space-y-3">
+                    <h4 class="text-xs font-gaming font-extrabold text-yellow-500 uppercase tracking-wider">EDIT MATCH SCHEDULE</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">Match Date (วันที่แข่ง)</label>
+                            <input type="text" id="modal-match-date-input" class="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-yellow-500 transition" placeholder="เช่น June 13">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-zinc-500 uppercase font-bold mb-1">Match Time (เวลาแข่ง)</label>
+                            <input type="text" id="modal-match-time-input" class="w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-yellow-500 transition" placeholder="เช่น 13:00">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Matchup Selection Panel -->
+                <div class="flex items-center justify-between gap-4 mb-6">
+                    <!-- Team 1 Card -->
+                    <div class="flex-1 text-center p-3 rounded bg-zinc-900/60 border border-zinc-800 flex flex-col items-center">
+                        <div id="modal-p1-flag" class="text-2xl mb-1">🦁</div>
+                        <div id="modal-p1-name" class="font-gaming font-bold text-sm text-cyan-400">TEAM 1</div>
+                        <div class="text-[10px] text-zinc-500 mb-3" id="modal-p1-meta">AOV Veteran</div>
+                        <!-- Score counter -->
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustModalScore(1, -1)" class="w-8 h-8 rounded bg-zinc-800 hover:bg-zinc-700 font-extrabold text-lg text-zinc-300 flex items-center justify-center transition">-</button>
+                            <span id="modal-p1-score" class="font-mono text-2xl font-bold w-8 text-center text-zinc-100">0</span>
+                            <button onclick="adjustModalScore(1, 1)" class="w-8 h-8 rounded bg-zinc-800 hover:bg-zinc-700 font-extrabold text-lg text-zinc-300 flex items-center justify-center transition">+</button>
+                        </div>
+                    </div>
+
+                    <!-- VS Divider -->
+                    <div class="text-zinc-600 font-gaming italic text-lg font-bold">VS</div>
+
+                    <!-- Team 2 Card -->
+                    <div class="flex-1 text-center p-3 rounded bg-zinc-900/60 border border-zinc-800 flex flex-col items-center">
+                        <div id="modal-p2-flag" class="text-2xl mb-1">🐯</div>
+                        <div id="modal-p2-name" class="font-gaming font-bold text-sm text-rose-500">TEAM 2</div>
+                        <div class="text-[10px] text-zinc-500 mb-3" id="modal-p2-meta">Top Challenger</div>
+                        <!-- Score counter -->
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustModalScore(2, -1)" class="w-8 h-8 rounded bg-zinc-800 hover:bg-zinc-700 font-extrabold text-lg text-zinc-300 flex items-center justify-center transition">-</button>
+                            <span id="modal-p2-score" class="font-mono text-2xl font-bold w-8 text-center text-zinc-100">0</span>
+                            <button onclick="adjustModalScore(2, 1)" class="w-8 h-8 rounded bg-zinc-800 hover:bg-zinc-700 font-extrabold text-lg text-zinc-300 flex items-center justify-center transition">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Player Mini Stat sheets -->
+                <div class="grid grid-cols-2 gap-4 border-t border-zinc-800 pt-5 text-xs">
+                    <div class="bg-zinc-900/40 p-3 rounded border border-zinc-800/50">
+                        <span class="text-zinc-500 block mb-1">Favorite Opening:</span>
+                        <span id="modal-p1-opening" class="text-zinc-300 font-semibold font-gaming">ม้าโยงขวาโคนเทียมเม็ด</span>
+                        <span class="text-zinc-500 block mt-2">Individual Win Rate:</span>
+                        <span id="modal-p1-wr" class="text-emerald-400 font-bold font-mono">72%</span>
+                    </div>
+                    <div class="bg-zinc-900/40 p-3 rounded border border-zinc-800/50">
+                        <span class="text-zinc-500 block mb-1">Favorite Opening:</span>
+                        <span id="modal-p2-opening" class="text-zinc-300 font-semibold font-gaming">ม้าโยงขวาบันลือโลก</span>
+                        <span class="text-zinc-500 block mt-2">Individual Win Rate:</span>
+                        <span id="modal-p2-wr" class="text-emerald-400 font-bold font-mono">68%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-zinc-900/50 px-6 py-4 border-t border-zinc-800 flex justify-between items-center">
+                <button onclick="autoSimulateModalMatch()" class="text-xs text-yellow-500 hover:text-yellow-400 font-bold tracking-wider">
+                    Auto-simulate (AI Pick)
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closePredictionModal()" class="px-4 py-2 text-xs font-semibold rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="saveMatchSimulation()" class="px-5 py-2 text-xs font-extrabold rounded bg-yellow-500 hover:bg-yellow-600 text-zinc-950 transition-all shadow-md">
+                        Save & Advance
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Celebration Screen overlay -->
+    <div id="champion-overlay" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
+        <div class="text-center max-w-md w-full p-8 border-2 border-yellow-500 rounded-2xl bg-zinc-950/95 shadow-2xl relative overflow-hidden">
+            <!-- Neon background glows -->
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-yellow-500/20 rounded-full blur-3xl"></div>
+
+            <span class="text-6xl mb-4 block">🏆</span>
+            <h2 class="text-3xl font-gaming font-black italic text-yellow-400 tracking-wider">TOURNAMENT CHAMPION</h2>
+            <p class="text-xs text-zinc-400 uppercase tracking-widest mt-1">NPK Chess Club 1v1 Premier League 2026</p>
+            
+            <div class="my-8 inline-block skew-card bg-gradient-to-r from-yellow-500 to-amber-400 px-10 py-4 text-black shadow-[0_0_30px_rgba(234,179,8,0.4)]">
+                <div class="unskew-content text-3xl font-gaming font-black tracking-tight" id="champ-name-display">
+                    NUNU
+                </div>
+            </div>
+
+            <p class="text-sm text-zinc-400 mb-6" id="champ-subtext">
+                Defeated all challengers to claim absolute victory!
+            </p>
+
+            <div class="flex justify-center gap-3">
+                <button onclick="sharePrediction()" class="px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded tracking-wider border border-zinc-700 transition">
+                    Share Prediction
+                </button>
+                <button onclick="closeChampionOverlay()" class="px-5 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-zinc-950 text-xs font-extrabold rounded tracking-wider transition shadow-md">
+                    Return to Bracket
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Copyright Banner -->
+    <footer class="mt-auto py-6 bg-zinc-950 border-t border-zinc-900/80 text-zinc-500 text-center text-xs relative z-10">
+        <div class="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <p>&copy; 2026 NPK Chess club | 1v1 CHAMPIONSHIP All rights reserved.</p>
+            </div>
+            <div class="flex gap-4">
+                <a href="#" class="hover:text-zinc-400 transition">Privacy Policy</a>
+                <span>&bull;</span>
+                <a href="#" class="hover:text-zinc-400 transition">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // -------------------------------------------------------------
+        // AUDIO FX CONTROLLER (Web Audio API Synthesizer)
+        // -------------------------------------------------------------
+        const AudioFX = {
+            enabled: true,
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playClick() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.1);
+                } catch (e) {
+                    console.log('Audio Context block: user interaction needed first.');
+                }
+            },
+            playUpdate() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+                    osc.frequency.setValueAtTime(880, this.ctx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.2);
+                } catch (e) {
+                    console.log('Audio error', e);
+                }
+            },
+            playChampion() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    const now = this.ctx.currentTime;
+                    const freqs = [523.25, 659.25, 783.99, 1046.50]; 
+                    freqs.forEach((f, i) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(f, now + (i * 0.08));
+                        gain.gain.setValueAtTime(0.06, now + (i * 0.08));
+                        gain.gain.linearRampToValueAtTime(0.01, now + (i * 0.08) + 0.4);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + (i * 0.08));
+                        osc.stop(now + (i * 0.08) + 0.4);
+                    });
+                } catch (e) {
+                    console.log('Audio error', e);
+                }
+            }
+        };
+
+        function toggleAudio() {
+            AudioFX.enabled = !AudioFX.enabled;
+            const btn = document.getElementById('audio-toggle-btn');
+            const iconUnmuted = document.getElementById('audio-icon-unmuted');
+            const iconMuted = document.getElementById('audio-icon-muted');
+            if (AudioFX.enabled) {
+                iconUnmuted.classList.remove('hidden');
+                iconMuted.classList.add('hidden');
+                btn.classList.add('border-zinc-700');
+                btn.classList.remove('border-red-900/50');
+                AudioFX.playClick();
+            } else {
+                iconUnmuted.classList.add('hidden');
+                iconMuted.classList.remove('hidden');
+                btn.classList.remove('border-zinc-700');
+                btn.classList.add('border-red-900/50');
+            }
+        }
+
+        // -------------------------------------------------------------
+        // ANIMAL AVATAR MAP
+        // -------------------------------------------------------------
+        const animalMap = {
+            'LION': '🦁', 'TIGER': '🐯', 'WOLF': '🐺', 'DRAGON': '🐉', 'PANDA': '🐼', 
+            'BEAR': '🐻', 'FOX': '🦊', 'EAGLE': '🦅', 'SHARK': '🦈', 'COBRA': '🐍', 
+            'OWL': '🦉', 'GORILLA': '🦍', 'LEOPARD': '🐆', 'UNICORN': '🦄', 'RAM': '🐏', 
+            'GATOR': '🐊', 'UNKNOWN': '🐾'
+        };
+
+        // -------------------------------------------------------------
+        // DATABASE OF PLAYERS (With 6-character randomized Original IDs)
+        // -------------------------------------------------------------
+        const defaultPlayersDb = {
+            'K6Y2R9': { displayName: 'น.ส.สมหญิง ใจร้าย', animal: 'LION', flag: '🦁', meta: 'สายบุก ทะลวงฟัน', wr: '74%', opening: 'ม้าโยงขวาโคนเทียมเม็ด' },
+            'X8N4W2': { displayName: 'นายสมชาย ใจดี', animal: 'TIGER', flag: '🐯', meta: 'เดินช้า แต่มั่นคง', wr: '69%', opening: 'ม้าโยงขวาบันลือโลก' },
+            'P9L1V7': { displayName: 'นางสมศรี ใจกล้า', animal: 'WOLF', flag: '🐺', meta: 'ใจเด็ด เหนียวแน่น', wr: '62%', opening: 'ม้าโยงขวาโคนผูกเม็ด' },
+            'H3T5K8': { displayName: 'นายมานะ อดทน', animal: 'DRAGON', flag: '🐉', meta: 'อดทนสมชื่อ คุมหมากนิ่ง', wr: '71%', opening: 'ม้าเทียมโคนนายผล' },
+            'B7D9Q4': { displayName: 'นายสับสน วุ่นวาย', animal: 'PANDA', flag: '🐼', meta: 'ลวงพรางคู่แข่งสับสน', wr: '60%', opening: 'ม้าเทียมมาตรฐาน' },
+            'M2R6Z1': { displayName: 'นายสมหมาย รักเรียน', animal: 'BEAR', flag: '🐻', meta: 'ตรรกะคมคิด ทฤษฎีแน่น', wr: '76%', opening: 'ม้าเทียมโคนขุนพลคู่' },
+            'J5F8Y3': { displayName: 'น.ส.หมั่นเพียร ขยันยิ่ง', animal: 'FOX', flag: '🦊', meta: 'ซ้อมหนัก ท้ายเกมเฉียบคม', wr: '65%', opening: 'ม้าเทียมเม็ดซ้าย' },
+            'G1C7S9': { displayName: 'นายสมิง ใจโหด', animal: 'EAGLE', flag: '🦅', meta: 'สายเชือดดุดัน ไม่เกรงใจใคร', wr: '63%', opening: 'ม้าซ้ายมาตรฐาน' },
+            'A4X6P2': { displayName: 'นายสมโภช โภชนา', animal: 'SHARK', flag: '🦈', meta: 'จังหวะฉกฉวยไร้ร่องรอย', wr: '72%', opening: 'ม้าซ้ายโคนผูกโคน' },
+            'V9W3H8': { displayName: 'น.ส.ปราถนา ช่างฝัน', animal: 'COBRA', flag: '🐍', meta: 'เดินหมากสร้างสรรค์ เกินคาดเดา', wr: '61%', opening: 'ม้าซ้ายโคนเทียมโคน' },
+            'T2K5L7': { displayName: 'น.ส.บัวผัน คนงาม', animal: 'OWL', flag: '🦉', meta: 'สุขุม คลาสสิก ยืนหนึ่ง', wr: '75%', opening: 'ม้าคุมกลาง' },
+            'Q8N1Y4': { displayName: 'นายศรราม คนหล่อ', animal: 'GORILLA', flag: '🦍', meta: 'สายเอนเตอร์เทน ดักทางยาก', wr: '59%', opening: 'ม้าอุปการซ้าย' },
+            'D3F6Z9': { displayName: 'น.ส.แก้วตา ยาใจ', animal: 'LEOPARD', flag: '🐆', meta: 'รวบรัด ตัดเกมไว', wr: '70%', opening: 'ม้ามังกรสลับขวา' },
+            'S7H2W5': { displayName: 'นายปิติ ยินดี', animal: 'UNICORN', flag: '🦄', meta: 'สายประนีประนอม สวนกลับคม', wr: '64%', opening: 'เรือมเหศวร' },
+            'R9M4X1': { displayName: 'นายชูใจ เลิศล้ำ', animal: 'RAM', flag: '🐏', meta: 'กระโดดข้ามแนวป้องกัน', wr: '73%', opening: 'ม้าอุปการขวา' },
+            'C5V8B3': { displayName: 'น.ส.วีณา เสียงซอ', animal: 'GATOR', flag: '🐊', meta: 'ล้อมจับแยบยล ไร้จุดอ่อน', wr: '66%', opening: 'ม้าโยงขวาโคนเทียมเม็ด' },
+            
+            // Dynamic Wildcard labels for Qualifier nodes in Thai
+            'M1W': { displayName: 'ผู้ชนะ M1', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M2W': { displayName: 'ผู้ชนะ M2', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M3W': { displayName: 'ผู้ชนะ M3', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M4W': { displayName: 'ผู้ชนะ M4', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M5W': { displayName: 'ผู้ชนะ M5', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M6W': { displayName: 'ผู้ชนะ M6', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M7W': { displayName: 'ผู้ชนะ M7', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M8W': { displayName: 'ผู้ชนะ M8', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M9W': { displayName: 'ผู้ชนะ M9', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M10W': { displayName: 'ผู้ชนะ M10', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M11W': { displayName: 'ผู้ชนะ M11', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M12W': { displayName: 'ผู้ชนะ M12', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบคัดเลือก', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M13W': { displayName: 'สายซ้ายแชมป์', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบชิงชนะเลิศ', wr: '50%', opening: 'ยังไม่ระบุ' },
+            'M14W': { displayName: 'สายขวาแชมป์', animal: 'UNKNOWN', flag: '🐾', meta: 'รอบชิงชนะเลิศ', wr: '50%', opening: 'ยังไม่ระบุ' }
+        };
+
+        let playersDb = JSON.parse(JSON.stringify(defaultPlayersDb));
+
+        // -------------------------------------------------------------
+        // DEFAULT MATCHES STRUCTURE (Cleared 0-0 state with corresponding new IDs)
+        // -------------------------------------------------------------
+        const defaultMatches = [
+            // Left Bracket - Quarterfinals
+            { id: 'M1', round: 'QF_LEFT', time: '13:00', date: 'June 13', team1: 'K6Y2R9', team2: 'X8N4W2', score1: 0, score2: 0, winner: null, side: 'left', finished: false },
+            { id: 'M2', round: 'QF_LEFT', time: '14:00', date: 'June 13', team1: 'P9L1V7', team2: 'H3T5K8', score1: 0, score2: 0, winner: null, side: 'left', finished: false },
+            { id: 'M3', round: 'QF_LEFT', time: '15:00', date: 'June 13', team1: 'B7D9Q4', team2: 'M2R6Z1', score1: 0, score2: 0, winner: null, side: 'left', finished: false },
+            { id: 'M4', round: 'QF_LEFT', time: '16:00', date: 'June 13', team1: 'J5F8Y3', team2: 'G1C7S9', score1: 0, score2: 0, winner: null, side: 'left', finished: false },
+
+            // Right Bracket - Quarterfinals
+            { id: 'M5', round: 'QF_RIGHT', time: '17:00', date: 'June 13', team1: 'A4X6P2', team2: 'V9W3H8', score1: 0, score2: 0, winner: null, side: 'right', finished: false },
+            { id: 'M6', round: 'QF_RIGHT', time: '18:00', date: 'June 13', team1: 'T2K5L7', team2: 'Q8N1Y4', score1: 0, score2: 0, winner: null, side: 'right', finished: false },
+            { id: 'M7', round: 'QF_RIGHT', time: '19:00', date: 'June 13', team1: 'D3F6Z9', team2: 'S7H2W5', score1: 0, score2: 0, winner: null, side: 'right', finished: false },
+            { id: 'M8', round: 'QF_RIGHT', time: '20:00', date: 'June 13', team1: 'R9M4X1', team2: 'C5V8B3', score1: 0, score2: 0, winner: null, side: 'right', finished: false },
+
+            // Left Bracket - Semifinals
+            { id: 'M9', round: 'SF_LEFT', time: '13:00', date: 'June 14', team1: 'M1W', team2: 'M2W', score1: 0, score2: 0, winner: null, side: 'left', finished: false },
+            { id: 'M10', round: 'SF_LEFT', time: '14:00', date: 'June 14', team1: 'M3W', team2: 'M4W', score1: 0, score2: 0, winner: null, side: 'left', finished: false },
+
+            // Right Bracket - Semifinals
+            { id: 'M11', round: 'SF_RIGHT', time: '15:00', date: 'June 14', team1: 'M5W', team2: 'M6W', score1: 0, score2: 0, winner: null, side: 'right', finished: false },
+            { id: 'M12', round: 'SF_RIGHT', time: '16:00', date: 'June 14', team1: 'M7W', team2: 'M8W', score1: 0, score2: 0, winner: null, side: 'right', finished: false },
+
+            // Bracket Finals (June 14)
+            { id: 'M13', round: 'BF_LEFT', time: '17:00', date: 'June 14', team1: 'M9W', team2: 'M10W', score1: 0, score2: 0, winner: null, side: 'left', finished: false },
+            { id: 'M14', round: 'BF_RIGHT', time: '18:00', date: 'June 14', team1: 'M11W', team2: 'M12W', score1: 0, score2: 0, winner: null, side: 'right', finished: false },
+
+            // Grand Final (June 14)
+            { id: 'M15', round: 'GF', time: '19:00', date: 'June 14', team1: 'M13W', team2: 'M14W', score1: 0, score2: 0, winner: null, side: 'center', finished: false }
+        ];
+
+        let matches = JSON.parse(JSON.stringify(defaultMatches));
+        let selectedMatchId = null;
+        let viewMode = 'bracket'; 
+
+        // Simulated time tracker starting exactly at June 14, 2026, 14:31:00
+        let simulatedTime = new Date('2026-06-14T14:31:00');
+
+        // -------------------------------------------------------------
+        // APPLICATION RUNTIME START
+        // -------------------------------------------------------------
+        window.onload = function() {
+            setInterval(tickClock, 1000);
+            renderAll();
+            window.addEventListener('resize', drawBracketLines);
+            setTimeout(drawBracketLines, 500); 
+        };
+
+        function tickClock() {
+            simulatedTime.setSeconds(simulatedTime.getSeconds() + 1);
+            
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const formattedDate = `${months[simulatedTime.getMonth()]} ${simulatedTime.getDate()}, ${simulatedTime.getFullYear()} ${padZero(simulatedTime.getHours())}:${padZero(simulatedTime.getMinutes())}:${padZero(simulatedTime.getSeconds())}`;
+            document.getElementById('live-clock').innerText = formattedDate;
+
+            const m11Time = new Date('2026-06-14T15:00:00');
+            const diffMs = m11Time - simulatedTime;
+
+            const countdownElement = document.getElementById('m11-countdown');
+            if (diffMs > 0) {
+                const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                const diffSecs = Math.floor((diffMs % (1000 * 60)) / 1000);
+                countdownElement.innerText = `${padZero(diffHrs)}h ${padZero(diffMins)}m ${padZero(diffSecs)}s`;
+            } else {
+                countdownElement.innerText = "LIVE CURRENTLY";
+                countdownElement.classList.add('text-red-500', 'animate-pulse');
+            }
+        }
+
+        function padZero(num) {
+            return num < 10 ? '0' + num : num;
+        }
+
+        // Toggle Views
+        function setViewMode(mode) {
+            AudioFX.playClick();
+            viewMode = mode;
+            
+            const bracketView = document.getElementById('bracket-view-container');
+            const listView = document.getElementById('list-view-container');
+            const rosterView = document.getElementById('roster-view-container');
+            
+            const btnBracket = document.getElementById('btn-view-bracket');
+            const btnList = document.getElementById('btn-view-list');
+            const btnRoster = document.getElementById('btn-view-roster');
+
+            // Hide all
+            bracketView.classList.add('hidden');
+            listView.classList.add('hidden');
+            rosterView.classList.add('hidden');
+
+            btnBracket.className = "px-3 py-1 rounded text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition";
+            btnList.className = "px-3 py-1 rounded text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition";
+            btnRoster.className = "px-3 py-1 rounded text-xs font-semibold text-zinc-400 hover:text-zinc-200 transition flex items-center gap-1";
+
+            if (mode === 'bracket') {
+                bracketView.classList.remove('hidden');
+                btnBracket.className = "px-3 py-1 rounded text-xs font-semibold transition bg-yellow-500 text-zinc-950";
+                setTimeout(drawBracketLines, 100);
+            } else if (mode === 'list') {
+                listView.classList.remove('hidden');
+                btnList.className = "px-3 py-1 rounded text-xs font-semibold transition bg-yellow-500 text-zinc-950";
+            } else if (mode === 'roster') {
+                rosterView.classList.remove('hidden');
+                btnRoster.className = "px-3 py-1 rounded text-xs font-semibold transition bg-yellow-500 text-zinc-950 flex items-center gap-1";
+                renderRosterManager();
+            }
+        }
+
+        // -------------------------------------------------------------
+        // RE-RENDER SYSTEM
+        // -------------------------------------------------------------
+        function renderAll() {
+            propagateBracketWinners();
+            renderBracketCards();
+            renderListTable();
+            renderPlayerGrid();
+            renderRosterManager();
+            drawBracketLines();
+        }
+
+        function propagateBracketWinners() {
+            const m1 = getMatch('M1');
+            const m2 = getMatch('M2');
+            const m3 = getMatch('M3');
+            const m4 = getMatch('M4');
+            const m5 = getMatch('M5');
+            const m6 = getMatch('M6');
+            const m7 = getMatch('M7');
+            const m8 = getMatch('M8');
+
+            const m9 = getMatch('M9');
+            const m10 = getMatch('M10');
+            const m11 = getMatch('M11');
+            const m12 = getMatch('M12');
+            const m13 = getMatch('M13');
+            const m14 = getMatch('M14');
+            const m15 = getMatch('M15');
+
+            // Left Semis
+            m9.team1 = m1.winner ? m1.winner : 'M1W';
+            m9.team2 = m2.winner ? m2.winner : 'M2W';
+            m10.team1 = m3.winner ? m3.winner : 'M3W';
+            m10.team2 = m4.winner ? m4.winner : 'M4W';
+
+            // Right Semis
+            m11.team1 = m5.winner ? m5.winner : 'M5W';
+            m11.team2 = m6.winner ? m6.winner : 'M6W';
+            m12.team1 = m7.winner ? m7.winner : 'M7W';
+            m12.team2 = m8.winner ? m8.winner : 'M8W';
+
+            // Finals
+            m13.team1 = m9.winner ? m9.winner : 'M13W'; 
+            m13.team2 = m10.winner ? m10.winner : 'M14W'; 
+            m14.team1 = m11.winner ? m11.winner : 'M11W';
+            m14.team2 = m12.winner ? m12.winner : 'M12W';
+
+            // Grand Final
+            m15.team1 = m13.winner ? m13.winner : 'M13W';
+            m15.team2 = m14.winner ? m14.winner : 'M14W';
+        }
+
+        function getMatch(id) {
+            return matches.find(m => m.id === id);
+        }
+
+        // -------------------------------------------------------------
+        // RENDER CARDS INSIDE BRACKETS
+        // -------------------------------------------------------------
+        function renderBracketCards() {
+            matches.forEach(match => {
+                const teamContainerId = `${match.id.toLowerCase()}-teams`;
+                const container = document.getElementById(teamContainerId);
+                if (!container) return;
+
+                const p1 = playersDb[match.team1] || { flag: '🐾', animal: 'UNKNOWN', displayName: match.team1 };
+                const p2 = playersDb[match.team2] || { flag: '🐾', animal: 'UNKNOWN', displayName: match.team2 };
+
+                const isP1Winner = match.finished && match.winner === match.team1;
+                const isP2Winner = match.finished && match.winner === match.team2;
+
+                // Color schemes: Left Side Cyan, Right Side Red, Center Gold
+                let p1ActiveColor = "bg-gradient-to-r from-cyan-600 to-sky-500 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]";
+                let p2ActiveColor = "bg-gradient-to-r from-cyan-600 to-sky-500 text-white shadow-[0_0_12px_rgba(6,182,212,0.4)]";
+                let p1ScoreColor = "bg-cyan-500 text-zinc-950";
+                let p2ScoreColor = "bg-cyan-500 text-zinc-950";
+
+                if (match.side === 'right') {
+                    p1ActiveColor = "bg-gradient-to-r from-rose-600 to-red-500 text-white shadow-[0_0_12px_rgba(244,63,94,0.4)]";
+                    p2ActiveColor = "bg-gradient-to-r from-rose-600 to-red-500 text-white shadow-[0_0_12px_rgba(244,63,94,0.4)]";
+                    p1ScoreColor = "bg-rose-500 text-zinc-950";
+                    p2ScoreColor = "bg-rose-500 text-zinc-950";
+                } else if (match.side === 'center') {
+                    p1ActiveColor = "bg-gradient-to-r from-yellow-500 to-amber-400 text-zinc-950 font-black shadow-[0_0_16px_rgba(234,179,8,0.5)]";
+                    p2ActiveColor = "bg-gradient-to-r from-yellow-500 to-amber-400 text-zinc-950 font-black shadow-[0_0_16px_rgba(234,179,8,0.5)]";
+                    p1ScoreColor = "bg-zinc-100 text-zinc-950";
+                    p2ScoreColor = "bg-zinc-100 text-zinc-950";
+                }
+
+                const defaultNeutralColor = "bg-zinc-800/90 text-zinc-400 border border-zinc-700/60";
+                const neutralScoreColor = "bg-zinc-700 text-zinc-400";
+
+                const cardP1Style = isP1Winner ? p1ActiveColor : defaultNeutralColor;
+                const scoreP1Style = isP1Winner ? p1ScoreColor : neutralScoreColor;
+
+                const cardP2Style = isP2Winner ? p2ActiveColor : defaultNeutralColor;
+                const scoreP2Style = isP2Winner ? p2ScoreColor : neutralScoreColor;
+
+                let html = `
+                    <!-- Team 1 Row -->
+                    <div class="skew-card flex items-center justify-between rounded ${cardP1Style} transition duration-300">
+                        <div class="unskew-content px-3 py-1.5 flex items-center gap-2 overflow-hidden truncate">
+                            <span class="text-sm shrink-0" title="Avatar: ${p1.animal}">${p1.flag}</span>
+                            <span class="font-gaming font-extrabold text-xs tracking-wide truncate uppercase">${p1.displayName}</span>
+                        </div>
+                        <div class="unskew-content w-7 h-7 flex items-center justify-center font-mono font-bold text-xs rounded-r shrink-0 ${scoreP1Style}">
+                            ${match.score1}
+                        </div>
+                    </div>
+
+                    <!-- Team 2 Row -->
+                    <div class="skew-card flex items-center justify-between rounded ${cardP2Style} transition duration-300">
+                        <div class="unskew-content px-3 py-1.5 flex items-center gap-2 overflow-hidden truncate">
+                            <span class="text-sm shrink-0" title="Avatar: ${p2.animal}">${p2.flag}</span>
+                            <span class="font-gaming font-extrabold text-xs tracking-wide truncate uppercase">${p2.displayName}</span>
+                        </div>
+                        <div class="unskew-content w-7 h-7 flex items-center justify-center font-mono font-bold text-xs rounded-r shrink-0 ${scoreP2Style}">
+                            ${match.score2}
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+
+                // Dynamically update status label indicator and Date/Time based on actual finished state
+                const matchBlock = document.getElementById(`match-${match.id}`);
+                if (matchBlock) {
+                    const headerTextSpan = matchBlock.querySelector('.font-gaming span:first-child');
+                    if (headerTextSpan) {
+                        headerTextSpan.innerText = `${match.id} - ${match.time} - ${match.date.toUpperCase()}`;
+                    }
+                    const label = matchBlock.querySelector('.status-label');
+                    if (label) {
+                        if (match.finished) {
+                            label.innerText = "FINISHED";
+                            label.className = "status-label text-cyan-400";
+                        } else if (match.id === 'M11') {
+                            label.innerText = "LIVE SOON";
+                            label.className = "status-label text-yellow-400 font-extrabold animate-pulse";
+                        } else {
+                            label.innerText = "UPCOMING";
+                            label.className = "status-label text-amber-500/70";
+                        }
+                    }
+                }
+            });
+        }
+
+        // Dynamic SVG Line Connector Drawer
+        function drawBracketLines() {
+            const svg = document.getElementById('bracket-svg');
+            if (!svg || viewMode !== 'bracket' || window.innerWidth < 1024) {
+                if (svg) svg.innerHTML = '';
+                return; 
+            }
+
+            svg.innerHTML = ''; 
+            const svgRect = svg.getBoundingClientRect();
+
+            const connections = [
+                { parent: 'M1', child: 'M9', align: 'left' },
+                { parent: 'M2', child: 'M9', align: 'left' },
+                { parent: 'M3', child: 'M10', align: 'left' },
+                { parent: 'M4', child: 'M10', align: 'left' },
+                
+                { parent: 'M9', child: 'M13', align: 'left' },
+                { parent: 'M10', child: 'M13', align: 'left' },
+
+                { parent: 'M5', child: 'M11', align: 'right' },
+                { parent: 'M6', child: 'M11', align: 'right' },
+                { parent: 'M7', child: 'M12', align: 'right' },
+                { parent: 'M8', child: 'M12', align: 'right' },
+
+                { parent: 'M11', child: 'M14', align: 'right' },
+                { parent: 'M12', child: 'M14', align: 'right' },
+
+                { parent: 'M13', child: 'M15', align: 'center-left' },
+                { parent: 'M14', child: 'M15', align: 'center-right' }
+            ];
+
+            connections.forEach(conn => {
+                const parentElem = document.getElementById(`match-${conn.parent}`);
+                const childElem = document.getElementById(`match-${conn.child}`);
+                if (!parentElem || !childElem) return;
+
+                const pRect = parentElem.getBoundingClientRect();
+                const cRect = childElem.getBoundingClientRect();
+
+                let startX, startY, endX, endY;
+
+                if (conn.align === 'left') {
+                    startX = pRect.right - svgRect.left;
+                    startY = pRect.top + pRect.height/2 - svgRect.top;
+                    endX = cRect.left - svgRect.left;
+                    endY = cRect.top + cRect.height/2 - svgRect.top;
+                } else if (conn.align === 'right') {
+                    startX = pRect.left - svgRect.left;
+                    startY = pRect.top + pRect.height/2 - svgRect.top;
+                    endX = cRect.right - svgRect.left;
+                    endY = cRect.top + cRect.height/2 - svgRect.top;
+                } else if (conn.align === 'center-left') {
+                    startX = pRect.right - svgRect.left;
+                    startY = pRect.top + pRect.height/2 - svgRect.top;
+                    endX = cRect.left - svgRect.left;
+                    endY = cRect.top + cRect.height/3 - svgRect.top; 
+                } else if (conn.align === 'center-right') {
+                    startX = pRect.left - svgRect.left;
+                    startY = pRect.top + pRect.height/2 - svgRect.top;
+                    endX = cRect.right - svgRect.left;
+                    endY = cRect.top + (cRect.height * 2)/3 - svgRect.top; 
+                }
+
+                const color = conn.align.includes('left') ? 'rgba(6, 182, 212, 0.4)' : 'rgba(244, 63, 94, 0.4)';
+                const midX = (startX + endX) / 2;
+
+                const d = `M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`;
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", d);
+                path.setAttribute("fill", "none");
+                path.setAttribute("stroke", color);
+                path.setAttribute("stroke-width", "2");
+                path.setAttribute("stroke-dasharray", conn.parent === 'M11' || conn.parent === 'M12' || conn.parent === 'M13' || conn.parent === 'M14' ? "4 4" : "none");
+                svg.appendChild(path);
+            });
+        }
+
+        // -------------------------------------------------------------
+        // CHRONOLOGICAL MATCH SCHEDULE POPULATER
+        // -------------------------------------------------------------
+        function renderListTable() {
+            const tbody = document.getElementById('match-schedule-tbody');
+            if (!tbody) return;
+
+            let html = "";
+            matches.forEach(match => {
+                const p1 = playersDb[match.team1] || { flag: '🐾', displayName: match.team1 };
+                const p2 = playersDb[match.team2] || { flag: '🐾', displayName: match.team2 };
+
+                const statusBadge = match.finished 
+                    ? `<span class="bg-zinc-800 text-zinc-400 font-bold px-2.5 py-1 rounded text-[10px]">FINISHED</span>`
+                    : match.id === 'M11' 
+                        ? `<span class="bg-yellow-500/10 text-yellow-400 border border-yellow-500/40 font-bold px-2.5 py-1 rounded text-[10px] animate-pulse">UPCOMING (LIVE SOON)</span>`
+                        : `<span class="bg-zinc-900 border border-zinc-800 text-zinc-500 font-semibold px-2.5 py-1 rounded text-[10px]">SCHEDULED</span>`;
+
+                html += `
+                    <tr class="hover:bg-zinc-800/30 transition-colors">
+                        <td class="py-4 px-4 font-gaming font-extrabold text-yellow-400 text-xs">${match.id}</td>
+                        <td class="py-4 px-4 font-mono text-zinc-400 font-semibold">${match.date} &bull; ${match.time}</td>
+                        <td class="py-4 px-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <span class="text-sm shrink-0">${p1.flag}</span>
+                                <span class="font-gaming font-bold text-zinc-200 uppercase">${p1.displayName}</span>
+                                <span class="text-xs text-zinc-500">vs</span>
+                                <span class="text-sm shrink-0">${p2.flag}</span>
+                                <span class="font-gaming font-bold text-zinc-200 uppercase">${p2.displayName}</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-4 text-center font-mono font-bold text-sm text-zinc-100">
+                            ${match.score1} - ${match.score2}
+                        </td>
+                        <td class="py-4 px-4">${statusBadge}</td>
+                        <td class="py-4 px-4 text-right">
+                            <button onclick="openPredictionModal('${match.id}')" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold px-3 py-1 rounded transition text-[10px]">
+                                Edit / Predict
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderPlayerGrid() {
+            const grid = document.getElementById('player-grid-stats');
+            if (!grid) return;
+
+            let html = "";
+            const keys = ['K6Y2R9', 'H3T5K8', 'M2R6Z1', 'A4X6P2', 'T2K5L7', 'D3F6Z9', 'R9M4X1', 'X8N4W2'];
+            keys.forEach(key => {
+                const p = playersDb[key];
+                html += `
+                    <div class="bg-zinc-950 border border-zinc-800/80 p-3 rounded hover:border-yellow-500/40 transition duration-200 shadow-sm flex flex-col items-center text-center">
+                        <span class="text-xl mb-1">${p.flag}</span>
+                        <h4 class="font-gaming font-black text-xs text-zinc-200 uppercase tracking-tight">${p.displayName}</h4>
+                        <span class="text-[9px] text-zinc-500 block mb-2">${p.meta}</span>
+                        <div class="w-full bg-zinc-900 rounded p-1.5 flex flex-col items-center">
+                            <span class="text-[9px] text-zinc-500">Win Rate</span>
+                            <span class="font-mono text-xs font-black text-emerald-400">${p.wr}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        // -------------------------------------------------------------
+        // ROSTER MANAGER VIEW GENERATOR (Dynamic profiles)
+        // -------------------------------------------------------------
+        function renderRosterManager() {
+            const grid = document.getElementById('roster-editor-grid');
+            if (!grid) return;
+
+            let html = "";
+            const keys = [
+                'K6Y2R9', 'X8N4W2', 'P9L1V7', 'H3T5K8', 'B7D9Q4', 'M2R6Z1', 'J5F8Y3', 'G1C7S9',
+                'A4X6P2', 'V9W3H8', 'T2K5L7', 'Q8N1Y4', 'D3F6Z9', 'S7H2W5', 'R9M4X1', 'C5V8B3'
+            ];
+
+            keys.forEach(key => {
+                const p = playersDb[key];
+                html += `
+                    <div class="bg-zinc-950 border border-zinc-800 rounded-lg p-4 flex flex-col justify-between hover:border-yellow-500/40 transition duration-200 group relative overflow-hidden">
+                        <!-- Animal Watermark background -->
+                        <div class="absolute -right-4 -bottom-4 text-7xl opacity-5 pointer-events-none group-hover:scale-110 transition duration-300">
+                            ${p.flag}
+                        </div>
+
+                        <div>
+                            <div class="flex items-center gap-2.5 mb-2.5">
+                                <span class="text-2xl" title="Avatar Identity: ${p.animal}">${p.flag}</span>
+                                <div class="truncate">
+                                    <h4 class="font-gaming font-black text-sm text-zinc-100 group-hover:text-yellow-400 transition uppercase tracking-wide truncate">${p.displayName}</h4>
+                                    <span class="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold">${key} (Original ID)</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5 text-xs text-zinc-400 pt-2 border-t border-zinc-900">
+                                <div><span class="text-zinc-600 font-semibold font-gaming">Spec Role:</span> <span class="font-medium text-zinc-300">${p.meta}</span></div>
+                                <div><span class="text-zinc-600 font-semibold font-gaming">Win Rate:</span> <span class="font-mono text-emerald-400 font-bold">${p.wr}</span></div>
+                                <div class="truncate"><span class="text-zinc-600 font-semibold font-gaming">เปิดหมากโปรด:</span> <span class="text-zinc-300 italic font-medium">${p.opening}</span></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-zinc-900 flex justify-end">
+                            <button onclick="openPlayerEditModal('${key}')" class="bg-zinc-900 hover:bg-yellow-500 hover:text-zinc-950 border border-zinc-800 text-zinc-300 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded transition duration-200">
+                                Customize Profile
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        // -------------------------------------------------------------
+        // ROSTER CUSTOMIZER TRIGGERS
+        // -------------------------------------------------------------
+        function openPlayerEditModal(key) {
+            AudioFX.playClick();
+            const p = playersDb[key];
+            if (!p) return;
+
+            document.getElementById('edit-player-key').value = key;
+            document.getElementById('edit-player-name').value = p.displayName;
+            document.getElementById('edit-player-animal').value = p.animal;
+            document.getElementById('edit-player-wr').value = p.wr;
+            document.getElementById('edit-player-opening').value = p.opening;
+            document.getElementById('edit-player-meta').value = p.meta;
+
+            document.getElementById('player-edit-modal').classList.remove('hidden');
+        }
+
+        // Close Player Edit Modal
+        function closePlayerEditModal() {
+            AudioFX.playClick();
+            document.getElementById('player-edit-modal').classList.add('hidden');
+        }
+
+        function savePlayerCustomization() {
+            const key = document.getElementById('edit-player-key').value;
+            if (!key || !playersDb[key]) return;
+
+            const nameInput = document.getElementById('edit-player-name').value.trim();
+            const animalSelect = document.getElementById('edit-player-animal').value;
+            const wrInput = document.getElementById('edit-player-wr').value.trim();
+            const openingSelect = document.getElementById('edit-player-opening').value;
+            const metaInput = document.getElementById('edit-player-meta').value.trim();
+
+            if (!nameInput) return; 
+
+            // Commit edited attributes
+            playersDb[key].displayName = nameInput;
+            playersDb[key].animal = animalSelect;
+            playersDb[key].flag = animalMap[animalSelect] || '🐾';
+            playersDb[key].wr = wrInput || '50%';
+            playersDb[key].opening = openingSelect;
+            playersDb[key].meta = metaInput || 'Challenger';
+
+            AudioFX.playUpdate();
+            renderAll();
+            closePlayerEditModal();
+        }
+
+        // -------------------------------------------------------------
+        // PREDICTION INTERACTIVES & MODALS
+        // -------------------------------------------------------------
+        let scoreState = { s1: 0, s2: 0 };
+
+        function openPredictionModal(matchId) {
+            AudioFX.playClick();
+            selectedMatchId = matchId;
+            const match = getMatch(matchId);
+            if (!match) return;
+
+            const p1 = playersDb[match.team1] || { flag: '🐾', animal: 'UNKNOWN', displayName: match.team1, wr: '50%', opening: 'ม้าโยงขวาโคนเทียมเม็ด' };
+            const p2 = playersDb[match.team2] || { flag: '🐾', animal: 'UNKNOWN', displayName: match.team2, wr: '50%', opening: 'ม้าโยงขวาโคนเทียมเม็ด' };
+
+            document.getElementById('modal-match-id').innerText = match.id;
+            document.getElementById('modal-match-title').innerText = `${match.id} Editor`;
+
+            // Populate date and time inputs in prediction editor
+            document.getElementById('modal-match-date-input').value = match.date;
+            document.getElementById('modal-match-time-input').value = match.time;
+
+            document.getElementById('modal-p1-flag').innerText = p1.flag;
+            document.getElementById('modal-p1-name').innerText = p1.displayName;
+            document.getElementById('modal-p1-meta').innerText = p1.meta || "Pro Player";
+            document.getElementById('modal-p1-opening').innerText = p1.opening;
+            document.getElementById('modal-p1-wr').innerText = p1.wr;
+
+            document.getElementById('modal-p2-flag').innerText = p2.flag;
+            document.getElementById('modal-p2-name').innerText = p2.displayName;
+            document.getElementById('modal-p2-meta').innerText = p2.meta || "Pro Challenger";
+            document.getElementById('modal-p2-opening').innerText = p2.opening;
+            document.getElementById('modal-p2-wr').innerText = p2.wr;
+
+            scoreState.s1 = match.score1;
+            scoreState.s2 = match.score2;
+            updateModalScoreDisplay();
+
+            document.getElementById('prediction-modal').classList.remove('hidden');
+        }
+
+        function closePredictionModal() {
+            AudioFX.playClick();
+            document.getElementById('prediction-modal').classList.add('hidden');
+        }
+
+        function adjustModalScore(playerNum, amt) {
+            AudioFX.playClick();
+            if (playerNum === 1) {
+                scoreState.s1 = Math.max(0, scoreState.s1 + amt);
+            } else {
+                scoreState.s2 = Math.max(0, scoreState.s2 + amt);
+            }
+            updateModalScoreDisplay();
+        }
+
+        function updateModalScoreDisplay() {
+            document.getElementById('modal-p1-score').innerText = scoreState.s1;
+            document.getElementById('modal-p2-score').innerText = scoreState.s2;
+        }
+
+        function autoSimulateModalMatch() {
+            AudioFX.playUpdate();
+            const match = getMatch(selectedMatchId);
+            const p1 = playersDb[match.team1] || { wr: '50%' };
+            const p2 = playersDb[match.team2] || { wr: '50%' };
+
+            const wr1 = parseInt(p1.wr) || 50;
+            const wr2 = parseInt(p2.wr) || 50;
+
+            const total = wr1 + wr2;
+            const chanceP1 = wr1 / total;
+
+            if (Math.random() < chanceP1) {
+                scoreState.s1 = 2;
+                scoreState.s2 = Math.random() < 0.4 ? 1 : 0;
+            } else {
+                scoreState.s1 = Math.random() < 0.4 ? 1 : 0;
+                scoreState.s2 = 2;
+            }
+            updateModalScoreDisplay();
+        }
+
+        // -------------------------------------------------------------
+        // TOURNAMENT SIMULATION ENGINE CORE
+        // -------------------------------------------------------------
+        function saveMatchSimulation() {
+            const match = getMatch(selectedMatchId);
+            if (!match) return;
+
+            // Save modified Date and Time
+            match.date = document.getElementById('modal-match-date-input').value.trim() || match.date;
+            match.time = document.getElementById('modal-match-time-input').value.trim() || match.time;
+
+            match.score1 = scoreState.s1;
+            match.score2 = scoreState.s2;
+
+            if (scoreState.s1 > scoreState.s2) {
+                match.winner = match.team1;
+                match.finished = true;
+            } else if (scoreState.s2 > scoreState.s1) {
+                match.winner = match.team2;
+                match.finished = true;
+            } else {
+                match.winner = null;
+                match.finished = false;
+            }
+
+            AudioFX.playUpdate();
+            renderAll();
+            closePredictionModal();
+
+            if (selectedMatchId === 'M15' && match.winner) {
+                triggerChampionCelebration(match.winner);
+            }
+        }
+
+        function simulateAllRemaining() {
+            matches.forEach(match => {
+                if (!match.finished || match.score1 === 0 && match.score2 === 0) {
+                    propagateBracketWinners();
+                    
+                    const p1 = playersDb[match.team1] || { wr: '50%' };
+                    const p2 = playersDb[match.team2] || { wr: '50%' };
+                    const wr1 = parseInt(p1.wr) || 50;
+                    const wr2 = parseInt(p2.wr) || 50;
+
+                    const total = wr1 + wr2;
+                    const chanceP1 = wr1 / total;
+
+                    if (Math.random() < chanceP1) {
+                        match.score1 = 2;
+                        match.score2 = Math.random() < 0.35 ? 1 : 0;
+                        match.winner = match.team1;
+                    } else {
+                        match.score1 = Math.random() < 0.35 ? 1 : 0;
+                        match.score2 = 2;
+                        match.winner = match.team2;
+                    }
+                    match.finished = true;
+                }
+            });
+
+            AudioFX.playChampion();
+            renderAll();
+
+            const finalMatch = getMatch('M15');
+            if (finalMatch && finalMatch.winner) {
+                triggerChampionCelebration(finalMatch.winner);
+            }
+        }
+
+        // --- DYNAMIC STATE RESET FUNCTIONS ---
+
+        // Option 1: Full hard reset to original factory state (both matches and customized players are reverted)
+        function resetTournament() {
+            AudioFX.playUpdate();
+            matches = JSON.parse(JSON.stringify(defaultMatches));
+            playersDb = JSON.parse(JSON.stringify(defaultPlayersDb));
+            renderAll();
+        }
+
+        // Option 2: Reset only match scores to original snapshot, leaving customized player databases completely untouched
+        function resetMatchScoresOnly() {
+            AudioFX.playUpdate();
+            matches = JSON.parse(JSON.stringify(defaultMatches));
+            renderAll();
+        }
+
+        // Option 3: Wipe all scores to 0-0 so you can simulate everything from the first round from scratch (Default loads in this state)
+        function clearAllScores() {
+            AudioFX.playUpdate();
+            matches.forEach(m => {
+                m.score1 = 0;
+                m.score2 = 0;
+                m.winner = null;
+                m.finished = false;
+            });
+            renderAll();
+        }
+
+        // -------------------------------------------------------------
+        // CELEBRATION OVERLAY & SCREEN
+        // -------------------------------------------------------------
+        function triggerChampionCelebration(championKey) {
+            const overlay = document.getElementById('champion-overlay');
+            const nameDisplay = document.getElementById('champ-name-display');
+            const subtext = document.getElementById('champ-subtext');
+
+            const p = playersDb[championKey] || { displayName: championKey, flag: '🐾', animal: 'UNKNOWN', meta: 'Champion', opening: 'ม้าโยงขวาโคนเทียมเม็ด' };
+            nameDisplay.innerText = p.displayName.toUpperCase();
+            
+            subtext.innerHTML = `
+                Defeated all opponents with an outstanding tournament performance!<br/>
+                <span class="text-yellow-500 font-bold mt-2 inline-block font-gaming">Avatar Team: ${p.flag} ${p.animal} &bull; Spec Role: ${p.meta} &bull; Opening: ${p.opening}</span>
+            `;
+
+            overlay.classList.remove('hidden');
+            AudioFX.playChampion();
+        }
+
+        function closeChampionOverlay() {
+            AudioFX.playClick();
+            document.getElementById('champion-overlay').classList.add('hidden');
+        }
+
+        function sharePrediction() {
+            AudioFX.playClick();
+            const champName = document.getElementById('champ-name-display').innerText;
+            const text = `🏆 My custom NPK tournament champion is ${champName}! Create and simulate your own custom board!`;
+            
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            const notification = document.createElement('div');
+            notification.className = "fixed bottom-5 left-1/2 -translate-x-1/2 bg-zinc-900 border border-emerald-500 text-emerald-400 font-bold px-4 py-2.5 rounded shadow-lg text-xs z-50 transition-all duration-300 transform translate-y-0 opacity-100";
+            notification.innerHTML = "📋 Prediction copied to clipboard! Share it with friends.";
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.className += " translate-y-2 opacity-0";
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
